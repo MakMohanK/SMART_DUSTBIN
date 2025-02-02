@@ -1,0 +1,23 @@
+https://www.kaggle.com/code/aviraljain58/smart-garbage-classification/output
+
+
+Waste Categories. 
+A. Organic Waste:
+    1. biological (plant based food items)
+
+B. Recyclable Materials:
+    1. brown-glass
+    2. green-glass
+    3. metal
+    4. paper
+    5. plastic
+    6. white-glass
+
+C. Disposable Waste:
+    1. cardboard
+    2. clothes
+    3. shoes
+    4. trash
+
+D. Hazardous Waste:
+    1. battery
