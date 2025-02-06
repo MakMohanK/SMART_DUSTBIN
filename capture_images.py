@@ -7,11 +7,13 @@ save_dir = "./images"
 os.makedirs(save_dir, exist_ok=True)
 
 # Initialize webcam
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 
 if not cap.isOpened():
     print("Error: Could not open webcam.")
     exit()
+else:
+    print("Opening Camera")
 
 # Capture 50 images with different brightness levels
 for i in range(50):

@@ -18,6 +18,4 @@ C. Disposable Waste:
     2. clothes
     3. shoes
     4. trash
-
-D. Hazardous Waste:
-    1. battery
+    5. battery
