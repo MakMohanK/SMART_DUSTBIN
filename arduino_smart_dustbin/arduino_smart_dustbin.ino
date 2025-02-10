@@ -1,3 +1,5 @@
+// 3 seprate bins
+
 
 #include <Servo.h>
 
@@ -35,19 +37,19 @@ void loop() {
     Serial.println(data);
 
     if (data == 'o') {
-      Serial.println("Organic bin in openration...");
+      Serial.println("Organic bin in opration...");
       open_and_close_organic();
     } 
     else if (data == 'r') {
-      Serial.println("Recyclable bin in openration...");
+      Serial.println("Recyclable bin in opration...");
       open_and_close_recyclable();
     } 
     else if (data == 'd') {
-      Serial.println("Disposable bin in openration...");
+      Serial.println("Disposable bin in opration...");
       open_and_close_disposable();
     }
     else if (data == 'x') {
-      Serial.println("All bins are in openrations...");
+      Serial.println("All bins are in oprations...");
       override();
     }
   }

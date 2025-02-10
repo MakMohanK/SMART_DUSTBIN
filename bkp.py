@@ -23,7 +23,7 @@ image_paths = [os.path.join(image_dir, img) for img in os.listdir(image_dir)[:50
 cap = cv2.VideoCapture(2)
 
 im_shape = (224, 224)
-MOTION_THR = 500
+MOTION_THR = 1500
 WAIT_BEFORE = 10
 MOTION_DETECTED = False
 model = tf.keras.models.load_model(model_path)
@@ -39,6 +39,8 @@ def text_to_speech(text, lang='en'):
     tts = gTTS(text=text, lang=lang, slow=False)
     tts.save("output.mp3")
     os.system("mpg321 output.mp3") 
+
+    
 
 def classify_waste(item: str) -> str:
     waste_categories = {
@@ -80,7 +82,7 @@ def capture_images():
     print("[INFO]...STARTED IMAGE CAPTURING")
     for i in range(50):  # Start capturing from 10th image to 50th image
         ret, frame = cap.read()
-        # frame = cv2.rotate(frame, cv2.ROTATE_180)
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
         if not ret:
             print("[ERROR]...CHECK CAMERA CONNECTION")
             break
@@ -89,38 +91,31 @@ def capture_images():
         image_path = os.path.join(image_dir, f"image_{i+1}.jpg")
         cv2.imwrite(image_path, bright_frame)
         cv2.imshow("Motion Detection", frame)
-        cv2.waitKey(20)
+        if cv2.waitKey(20) & 0xFF == ord('q'): # press q to break code excecution
+            break
         # time.sleep(0.3)
     print("[INFO]...END OF IMAGE CAPTURING")
     
 
-text = "Welcome ! to smart dustbin, I am happy to help you with sorting organic waste."
+text = "Welcome ! to smart dustbin system, I am happy to help you with sorting organic waste."
 text_to_speech(text)
 
 while True:
     ret, frame2 = cap.read()
-    
     if not ret:
         print("[ERROR]...CHECK CAMERA CONNECTION")
         break
     
-    # frame2 = cv2.rotate(frame2, cv2.ROTATE_180)
     gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (21, 21), 0)
     diff = cv2.absdiff(frame1, gray)
-    thresh = cv2.threshold(diff, 125, 255, cv2.THRESH_BINARY)[1]
-    # thresh = cv2.adaptiveThreshold(diff, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+    thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
     thresh = cv2.dilate(thresh, None, iterations=2)
     contours, ans = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.imshow("Motion Detection", frame2)
-    cv2.waitKey(20)
     
     if not MOTION_DETECTED:
         for contour in contours:
             if cv2.contourArea(contour) > MOTION_THR:  # Ignore small movements
-                ret, frame2 = cap.read()
-                cv2.imshow("Motion Detection", frame2)
-                cv2.waitKey(20)
                 MOTION_DETECTED = True
     else:
         MOTION_DETECTED = False
@@ -132,50 +127,43 @@ while True:
         print("[INFO]...MOTION DETECTED")
         for x in range(WAIT_BEFORE):
             ret, frame2 = cap.read()
-            cv2.imshow("Motion Detection", frame2)
-            cv2.waitKey(20)
-            time.sleep(0.4) 
+            time.sleep(1) 
             print("[USER INFO]...WAIT FOR ", WAIT_BEFORE-x, " SECONDS")
-            text = "Wait for "+str(WAIT_BEFORE-x)+" seconds"
+            text = "wait for "+str(WAIT_BEFORE-x)+" seconds"
             text_to_speech(text)
-        
         capture_images()
+
         conf, ind, clss = perform_prediction()
 
         if conf > 0.50:
             data_to_uno = classify_waste(clss)
             if data_to_uno == 'o':
-                text = "As per my knowledge, it is considered as organic waste hence driping it to organic bin."
+                text = "As per my knowwledge, it is considered as organic waste hence driping it to organic bin."
                 text_to_speech(text)
             elif data_to_uno == 'r':
-                text = "As per my knowledge, it is considered as recycle or disposable type of waste hence droping it in other bin."
+                text = "As per my knowwledge, it is considered as recycle or disposable type of waste hence droping it in other bin."
                 text_to_speech(text)
             ser.write(f"{data_to_uno}\n".encode())  
             time.sleep(1)
         else:
-            text = "I am sorry, Can you please re-orient the trash I am unable to predict properly."
-            text_to_speech(text)
             data_to_uno = "x"
             ser.write(f"{data_to_uno}\n".encode())  
             time.sleep(1)
 
         while True:
-            ret, frame2 = cap.read()
-            cv2.imshow("Motion Detection", frame2)
-            cv2.waitKey(20)
             if ser.in_waiting > 0:
                 response = ser.readline().decode('utf-8').strip()
                 print(response)
                 if "Closing" in response:
-                    time.sleep(2)
                     print("[INFO]...DONE WITH OPRATION")
-                    text = "Ready for Next Prediction"
-                    text_to_speech(text)
+                    time.sleep(8) # wait for 5 sec to bin fully close
                     break
         
+        for _ in range(5):  # Adjust this number based on latency
+            cap.read()
+        
     cv2.imshow("Motion Detection", frame2)
-    gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
     frame1 = gray
     
     if cv2.waitKey(20) & 0xFF == ord('q'): # press q to break code excecution
